@@ -1,0 +1,136 @@
+<html lang="en"><head>
+<script id="yutonng-nav-fix">
+(function(){
+    // Stub platform functions so nav JS doesn't crash
+    window.isFrontEnv = function(){ return false; };
+    window.isMo       = function(){ return window.innerWidth <= 992; };
+    window.sensors    = window.sensors || { track: function(){} };
+
+    // Fix logo text injected by JS
+    function fixText(){
+        document.querySelectorAll('*').forEach(function(el){
+            if(el.childElementCount === 0 && el.textContent){
+                if(el.textContent.trim() === 'FAW TRUCKS'){
+                    el.textContent = 'YUTONNG TRUCK';
+                } else if(el.textContent.trim() === 'FAW Trucks'){
+                    el.textContent = 'Yutonng Truck';
+                }
+            }
+        });
+    }
+
+    // Fix mobile nav after DOM is ready
+    function fixNav(){
+        fixText();
+
+        // Mobile hamburger button (.p_navButton)
+        var btn = document.querySelector('.p_navButton');
+        var navContent = document.querySelector('.p_navContent');
+        var blackBg = document.querySelector('.p_blackbg');
+        var closeBtn = document.querySelector('.p_closeT');
+
+        if(btn && navContent){
+            // Remove old listeners by cloning
+            var newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+
+            newBtn.addEventListener('click', function(e){
+                e.stopPropagation();
+                navContent.classList.add('showmenuBox');
+                if(blackBg) blackBg.classList.add('showbg');
+            });
+        }
+
+        if(closeBtn && navContent){
+            var newClose = closeBtn.cloneNode(true);
+            closeBtn.parentNode.replaceChild(newClose, closeBtn);
+            newClose.addEventListener('click', function(){
+                navContent.classList.remove('showmenuBox');
+                if(blackBg) blackBg.classList.remove('showbg');
+            });
+        }
+
+        // Close nav when clicking black overlay
+        if(blackBg && navContent){
+            blackBg.addEventListener('click', function(){
+                navContent.classList.remove('showmenuBox');
+                blackBg.classList.remove('showbg');
+            });
+        }
+
+        // Mobile dropdown submenus - clicking arrow icons
+        document.querySelectorAll('.p_navItem1 > p .p_jtIcon').forEach(function(icon){
+            var newIcon = icon.cloneNode(true);
+            icon.parentNode.replaceChild(newIcon, icon);
+            newIcon.addEventListener('click', function(e){
+                e.stopPropagation();
+                var sub = this.closest('.p_navItem1').querySelector('.p_navBox2');
+                if(sub){
+                    sub.style.display = sub.style.display === 'block' ? 'none' : 'block';
+                }
+                this.classList.toggle('rotate');
+            });
+        });
+
+        document.querySelectorAll('.p_navItem2 > p .p_jtIcon').forEach(function(icon){
+            var newIcon = icon.cloneNode(true);
+            icon.parentNode.replaceChild(newIcon, icon);
+            newIcon.addEventListener('click', function(e){
+                e.stopPropagation();
+                var sub = this.closest('.p_navItem2').querySelector('.p_level3Box');
+                if(sub){
+                    sub.style.display = sub.style.display === 'block' ? 'none' : 'block';
+                }
+                this.classList.toggle('rotate');
+            });
+        });
+
+        // Also make nav items with children expandable on mobile tap
+        document.querySelectorAll('.p_navItem1 > p').forEach(function(item){
+            item.addEventListener('click', function(e){
+                if(window.innerWidth <= 992){
+                    var sub = this.closest('.p_navItem1').querySelector('.p_navBox2');
+                    if(sub && !e.target.tagName.match(/^A$/i)){
+                        e.preventDefault();
+                        sub.style.display = sub.style.display === 'block' ? 'none' : 'block';
+                    }
+                }
+            });
+        });
+    }
+
+    // Suppress RequireJS mismatch errors silently
+    window.onerror = function(msg, src, line, col, err){
+        if(!msg) return false;
+        if(msg.indexOf('Mismatched') > -1 ||
+           msg.indexOf('isFrontEnv') > -1 ||
+           msg.indexOf('isMo is not') > -1){
+            return true;
+        }
+    };
+
+    // Run on DOM ready and after JS finishes
+    if(document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', fixNav);
+    } else {
+        fixNav();
+    }
+    setTimeout(fixNav, 800);
+    setTimeout(fixNav, 2000);
+    window.addEventListener('load', fixNav);
+})();
+</script>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1.0" name="viewport"/>
+<meta content="noindex" name="robots"/>
+<title>异常访问</title>
+</head>
+<body style="font-family:'Arial',sans-serif;background-color:#f5f5f5;color:#333;text-align:center;padding:50px;margin:0;">
+<div>
+<h1 style="color:#d9534f;">403 Forbidden</h1>
+<p style="margin-bottom:20px;font-size:18px;">Sorry, you do not have permission to access this resource.</p>
+<p style="margin-bottom:20px;font-size:18px;">由于您的行为异常，您暂时无法访问该页面，请稍后再试。</p>
+<p style="margin-bottom:10px;font-size:16px;">ip: 102.89.69.227</p>
+<p style="margin-bottom:10px;font-size:16px;">status: CE-WAF-WLF</p>
+</div>
+</body></html>
