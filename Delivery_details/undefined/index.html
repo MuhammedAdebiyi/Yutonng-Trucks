@@ -124,6 +124,110 @@
 <meta content="width=device-width,initial-scale=1.0" name="viewport"/>
 <meta content="noindex" name="robots"/>
 <title>异常访问</title>
+<style id="yutonng-safari-fix">
+/* ── Safari / iOS fixes ─────────────────────────────── */
+
+/* Fix blank hero/banner on Safari - often caused by transform issues */
+[class*="p_banner"],
+[class*="p_loop"],
+[class*="p_slide"],
+[class*="banner"],
+[class*="swiper"],
+[class*="slider"] {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+/* Fix background images not showing on Safari */
+[class*="p_bg"],
+[style*="background-image"] {
+    -webkit-background-size: cover !important;
+    background-size: cover !important;
+}
+
+/* Fix position fixed on iOS (causes blank areas) */
+[class*="p_header"],
+[class*="p_nav"],
+header, nav {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+/* Fix flex display on older Safari */
+[class*="p_flex"],
+[class*="flexbox"],
+.p_item,
+.cbox-2-1 {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-wrap: wrap;
+    flex-wrap: wrap;
+}
+
+/* Fix overflow hidden clipping on iOS */
+[class*="p_loop"] *,
+[class*="p_banner"] * {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Fix the large blue empty space at top on mobile Safari */
+body {
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+}
+
+/* Fix images not loading on Safari */
+img {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+/* Fix blank top section - force min height */
+[class*="p_header"] {
+    min-height: 60px;
+}
+</style>
+<script id="yutonng-safari-js">
+(function(){
+    // Detect Safari
+    var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    if(isSafari || isIOS){
+        document.documentElement.classList.add('is-safari');
+
+        // Fix blank sections by forcing reflow
+        window.addEventListener('load', function(){
+            // Force repaint on all major sections
+            document.querySelectorAll('[class*="p_banner"],[class*="p_loop"],[class*="p_slide"]').forEach(function(el){
+                el.style.webkitTransform = 'translateZ(0)';
+                el.style.transform = 'translateZ(0)';
+                // Force reflow
+                el.offsetHeight;
+            });
+
+            // Fix background images on iOS
+            document.querySelectorAll('[style*="background-image"]').forEach(function(el){
+                var bg = el.style.backgroundImage;
+                if(bg){
+                    el.style.backgroundSize = 'cover';
+                    el.style.webkitBackgroundSize = 'cover';
+                }
+            });
+        });
+
+        // Fix scroll position on iOS - page sometimes loads scrolled down
+        window.addEventListener('load', function(){
+            setTimeout(function(){
+                window.scrollTo(0, 0);
+            }, 100);
+        });
+    }
+})();
+</script>
 </head>
 <body style="font-family:'Arial',sans-serif;background-color:#f5f5f5;color:#333;text-align:center;padding:50px;margin:0;">
 <div>
