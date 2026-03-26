@@ -1,233 +1,124 @@
 <html lang="en"><head>
-<script id="yutonng-nav-fix">
+<script id="yutonng-name-override">
 (function(){
-    // Stub platform functions so nav JS doesn't crash
     window.isFrontEnv = function(){ return false; };
-    window.isMo       = function(){ return window.innerWidth <= 992; };
-    window.sensors    = window.sensors || { track: function(){} };
+    window.isMo = function(){ return window.innerWidth <= 992; };
+    window.sensors = window.sensors || { track: function(){} };
 
-    // Fix logo text injected by JS
-    function fixText(){
-        document.querySelectorAll('*').forEach(function(el){
-            if(el.childElementCount === 0 && el.textContent){
-                if(el.textContent.trim() === 'FAW TRUCKS'){
-                    el.textContent = 'YUTONNG TRUCK';
-                } else if(el.textContent.trim() === 'FAW Trucks'){
-                    el.textContent = 'Yutonng Truck';
-                }
-            }
-        });
-    }
+    // Override the global site config object before JS reads it
+    window.__siteConfig = window.__siteConfig || {};
+    window.__siteConfig.siteName = "YUTONNG TRUCK COMPANY";
+    window.__siteConfig.siteTitle = "YUTONNG TRUCK COMPANY";
 
-    // Fix mobile nav after DOM is ready
-    function fixNav(){
-        fixText();
-
-        // Mobile hamburger button (.p_navButton)
-        var btn = document.querySelector('.p_navButton');
-        var navContent = document.querySelector('.p_navContent');
-        var blackBg = document.querySelector('.p_blackbg');
-        var closeBtn = document.querySelector('.p_closeT');
-
-        if(btn && navContent){
-            // Remove old listeners by cloning
-            var newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
-
-            newBtn.addEventListener('click', function(e){
-                e.stopPropagation();
-                navContent.classList.add('showmenuBox');
-                if(blackBg) blackBg.classList.add('showbg');
-            });
+    // Intercept ALL XHR requests
+    var _open = XMLHttpRequest.prototype.open;
+    var _send = XMLHttpRequest.prototype.send;
+    
+    XMLHttpRequest.prototype.open = function(m, url){
+        this._url = url || '';
+        return _open.apply(this, arguments);
+    };
+    
+    XMLHttpRequest.prototype.send = function(body){
+        var self = this;
+        var url = self._url || '';
+        if(url.indexOf('baseConfig') > -1 || url.indexOf('fwebapi') > -1){
+            var fakeResp = '{"code":0,"data":{"siteName":"YUTONNG TRUCK COMPANY","siteTitle":"YUTONNG TRUCK COMPANY","logo":"","icp":"","copyright":"2025 YUTONNG TRUCK COMPANY"}}';
+            setTimeout(function(){
+                try {
+                    Object.defineProperty(self, 'readyState', { get: function(){ return 4; }, configurable: true });
+                    Object.defineProperty(self, 'status',    { get: function(){ return 200; }, configurable: true });
+                    Object.defineProperty(self, 'responseText', { get: function(){ return fakeResp; }, configurable: true });
+                    Object.defineProperty(self, 'response',    { get: function(){ return fakeResp; }, configurable: true });
+                    if(typeof self.onreadystatechange === 'function') self.onreadystatechange();
+                    if(typeof self.onload === 'function') self.onload();
+                } catch(e){}
+            }, 5);
+            return;
         }
-
-        if(closeBtn && navContent){
-            var newClose = closeBtn.cloneNode(true);
-            closeBtn.parentNode.replaceChild(newClose, closeBtn);
-            newClose.addEventListener('click', function(){
-                navContent.classList.remove('showmenuBox');
-                if(blackBg) blackBg.classList.remove('showbg');
-            });
-        }
-
-        // Close nav when clicking black overlay
-        if(blackBg && navContent){
-            blackBg.addEventListener('click', function(){
-                navContent.classList.remove('showmenuBox');
-                blackBg.classList.remove('showbg');
-            });
-        }
-
-        // Mobile dropdown submenus - clicking arrow icons
-        document.querySelectorAll('.p_navItem1 > p .p_jtIcon').forEach(function(icon){
-            var newIcon = icon.cloneNode(true);
-            icon.parentNode.replaceChild(newIcon, icon);
-            newIcon.addEventListener('click', function(e){
-                e.stopPropagation();
-                var sub = this.closest('.p_navItem1').querySelector('.p_navBox2');
-                if(sub){
-                    sub.style.display = sub.style.display === 'block' ? 'none' : 'block';
-                }
-                this.classList.toggle('rotate');
-            });
-        });
-
-        document.querySelectorAll('.p_navItem2 > p .p_jtIcon').forEach(function(icon){
-            var newIcon = icon.cloneNode(true);
-            icon.parentNode.replaceChild(newIcon, icon);
-            newIcon.addEventListener('click', function(e){
-                e.stopPropagation();
-                var sub = this.closest('.p_navItem2').querySelector('.p_level3Box');
-                if(sub){
-                    sub.style.display = sub.style.display === 'block' ? 'none' : 'block';
-                }
-                this.classList.toggle('rotate');
-            });
-        });
-
-        // Also make nav items with children expandable on mobile tap
-        document.querySelectorAll('.p_navItem1 > p').forEach(function(item){
-            item.addEventListener('click', function(e){
-                if(window.innerWidth <= 992){
-                    var sub = this.closest('.p_navItem1').querySelector('.p_navBox2');
-                    if(sub && !e.target.tagName.match(/^A$/i)){
-                        e.preventDefault();
-                        sub.style.display = sub.style.display === 'block' ? 'none' : 'block';
-                    }
-                }
-            });
-        });
-    }
-
-    // Suppress RequireJS mismatch errors silently
-    window.onerror = function(msg, src, line, col, err){
-        if(!msg) return false;
-        if(msg.indexOf('Mismatched') > -1 ||
-           msg.indexOf('isFrontEnv') > -1 ||
-           msg.indexOf('isMo is not') > -1){
-            return true;
-        }
+        return _send.apply(this, arguments);
     };
 
-    // Run on DOM ready and after JS finishes
-    if(document.readyState === 'loading'){
-        document.addEventListener('DOMContentLoaded', fixNav);
-    } else {
-        fixNav();
+    // Intercept fetch
+    if(window.fetch){
+        var _fetch = window.fetch;
+        window.fetch = function(url, opts){
+            if(typeof url === 'string' && (url.indexOf('baseConfig') > -1 || url.indexOf('fwebapi') > -1)){
+                var fakeResp = '{"code":0,"data":{"siteName":"YUTONNG TRUCK COMPANY","siteTitle":"YUTONNG TRUCK COMPANY"}}';
+                return Promise.resolve(new Response(fakeResp, {status:200, headers:{'Content-Type':'application/json'}}));
+            }
+            return _fetch.apply(this, arguments);
+        };
     }
-    setTimeout(fixNav, 800);
-    setTimeout(fixNav, 2000);
-    window.addEventListener('load', fixNav);
+
+    // DOM watcher - aggressively replace FAW text
+    function replaceFAW(){
+        var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+        var node;
+        while(node = walker.nextNode()){
+            if(node.nodeValue && node.nodeValue.indexOf('FAW') > -1){
+                node.nodeValue = node.nodeValue
+                    .replace(/FAW TRUCKS INTERNATIONAL CO\., LTD\./g, 'YUTONNG TRUCK COMPANY')
+                    .replace(/FAW TRUCKS/g, 'YUTONNG TRUCK')
+                    .replace(/FAW Trucks/g, 'Yutonng Truck')
+                    .replace(/FAW TRUCK/g, 'YUTONNG TRUCK')
+                    .replace(/FAW Truck/g, 'Yutonng Truck');
+            }
+        }
+    }
+
+    // Fix mobile nav
+    function fixNav(){
+        var btn = document.querySelector('.p_navButton');
+        var nav = document.querySelector('.p_navContent');
+        var bg  = document.querySelector('.p_blackbg');
+        var cls = document.querySelector('.p_closeT');
+
+        if(btn && nav){
+            btn.onclick = function(e){
+                e.stopPropagation();
+                nav.classList.add('showmenuBox');
+                if(bg) bg.classList.add('showbg');
+            };
+        }
+        if(cls && nav){
+            cls.onclick = function(){
+                nav.classList.remove('showmenuBox');
+                if(bg) bg.classList.remove('showbg');
+            };
+        }
+        if(bg && nav){
+            bg.onclick = function(){
+                nav.classList.remove('showmenuBox');
+                bg.classList.remove('showbg');
+            };
+        }
+    }
+
+    // Suppress errors
+    window.onerror = function(msg){
+        if(!msg) return false;
+        if(msg.indexOf('Mismatched') > -1 || msg.indexOf('isFrontEnv') > -1 ||
+           msg.indexOf('isMo is not') > -1) return true;
+    };
+
+    document.addEventListener('DOMContentLoaded', function(){ replaceFAW(); fixNav(); });
+    window.addEventListener('load', function(){ replaceFAW(); fixNav(); });
+    setTimeout(function(){ replaceFAW(); fixNav(); }, 300);
+    setTimeout(function(){ replaceFAW(); fixNav(); }, 1000);
+    setTimeout(function(){ replaceFAW(); fixNav(); }, 2500);
+
+    // MutationObserver - catches any text injected after load
+    var observer = new MutationObserver(function(){ replaceFAW(); });
+    document.addEventListener('DOMContentLoaded', function(){
+        observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    });
 })();
 </script>
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1.0" name="viewport"/>
 <meta content="noindex" name="robots"/>
 <title>异常访问</title>
-<style id="yutonng-safari-fix">
-/* ── Safari / iOS fixes ─────────────────────────────── */
-
-/* Fix blank hero/banner on Safari - often caused by transform issues */
-[class*="p_banner"],
-[class*="p_loop"],
-[class*="p_slide"],
-[class*="banner"],
-[class*="swiper"],
-[class*="slider"] {
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-}
-
-/* Fix background images not showing on Safari */
-[class*="p_bg"],
-[style*="background-image"] {
-    -webkit-background-size: cover !important;
-    background-size: cover !important;
-}
-
-/* Fix position fixed on iOS (causes blank areas) */
-[class*="p_header"],
-[class*="p_nav"],
-header, nav {
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-}
-
-/* Fix flex display on older Safari */
-[class*="p_flex"],
-[class*="flexbox"],
-.p_item,
-.cbox-2-1 {
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-flex-wrap: wrap;
-    flex-wrap: wrap;
-}
-
-/* Fix overflow hidden clipping on iOS */
-[class*="p_loop"] *,
-[class*="p_banner"] * {
-    -webkit-overflow-scrolling: touch;
-}
-
-/* Fix the large blue empty space at top on mobile Safari */
-body {
-    -webkit-overflow-scrolling: touch;
-    overflow-x: hidden;
-}
-
-/* Fix images not loading on Safari */
-img {
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-}
-
-/* Fix blank top section - force min height */
-[class*="p_header"] {
-    min-height: 60px;
-}
-</style>
-<script id="yutonng-safari-js">
-(function(){
-    // Detect Safari
-    var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-    if(isSafari || isIOS){
-        document.documentElement.classList.add('is-safari');
-
-        // Fix blank sections by forcing reflow
-        window.addEventListener('load', function(){
-            // Force repaint on all major sections
-            document.querySelectorAll('[class*="p_banner"],[class*="p_loop"],[class*="p_slide"]').forEach(function(el){
-                el.style.webkitTransform = 'translateZ(0)';
-                el.style.transform = 'translateZ(0)';
-                // Force reflow
-                el.offsetHeight;
-            });
-
-            // Fix background images on iOS
-            document.querySelectorAll('[style*="background-image"]').forEach(function(el){
-                var bg = el.style.backgroundImage;
-                if(bg){
-                    el.style.backgroundSize = 'cover';
-                    el.style.webkitBackgroundSize = 'cover';
-                }
-            });
-        });
-
-        // Fix scroll position on iOS - page sometimes loads scrolled down
-        window.addEventListener('load', function(){
-            setTimeout(function(){
-                window.scrollTo(0, 0);
-            }, 100);
-        });
-    }
-})();
-</script>
 </head>
 <body style="font-family:'Arial',sans-serif;background-color:#f5f5f5;color:#333;text-align:center;padding:50px;margin:0;">
 <div>
